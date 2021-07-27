@@ -17,7 +17,7 @@ app = dash.Dash(__name__,external_stylesheets=[dbc.themes.CYBORG],meta_tags=[{'n
 
 canton_source ='https://raw.githubusercontent.com/dracoanguis/animal-dashbord/main/Data/Cantons-observation.geojson?token=ANUIZ2E3OVFR2HEPEXI6M5LA7XZJI'
 
-canton_path = os.path.join('Data','Cantons-observation.geojson')
+canton_path = os.path.join('Data','CantonsCH.geojson')
 
 with open(canton_path,'r') as cp:
 	cantons = json.load(cp)
@@ -76,7 +76,7 @@ datafig = [
 				geojson=cantons,
 				featureidkey='properties.id', # place where the id of a feature is fetched
 				locations=[cantons['features'][x]['properties']['id'] for x in range(26)],
-				z=[cantons['features'][x]['properties']['NUMPOINTS'] for x in range(26)],
+				z=[cantons['features'][x]['properties']['id'] for x in range(26)],
 				showscale=False, #hide the atrocious colorbar legend
 				hovertext=[cantons['features'][x]['properties']['name'] for x in range(26)],
 				colorscale=[[0,'#fcc0c0'],[0.5,'#f14170'],[1,'#b1064e']] # colorscale wich was determined on the other thing			
@@ -105,26 +105,26 @@ fig = dict(
 
 
 #stats construction
-stat_path = os.path.join('Data','Sorted_Swiss.csv')
+# stat_path = os.path.join('Data','Sorted_Swiss.csv')
 
-statimal = pd.read_csv(stat_path)
+# statimal = pd.read_csv(stat_path)
 
-statimal = pd.DataFrame(statimal['verbatimScientificName'].value_counts())
+# statimal = pd.DataFrame(statimal['verbatimScientificName'].value_counts())
 
-reste = 0
-dico = (statimal[10:]).to_dict()['verbatimScientificName']
-for key in dico:
-    reste+= int(dico[key])
+# reste = 0
+# dico = (statimal[10:]).to_dict()['verbatimScientificName']
+# for key in dico:
+#     reste+= int(dico[key])
 
 
-statimal = statimal[:10].to_dict()
+# statimal = statimal[:10].to_dict()
 
-statimal['verbatimScientificName']['Other species']=reste
+# statimal['verbatimScientificName']['Other species']=reste
 
-statimal = pd.DataFrame(statimal)
+# statimal = pd.DataFrame(statimal)
 
-statfig = px.pie(data_frame=statimal,values='verbatimScientificName',names=statimal.index)
-statfig.update_layout(paper_bgcolor='#000',font_color='#fff',margin={'r':0,'l':0,'t':0,'b':0})
+# statfig = px.pie(data_frame=statimal,values='verbatimScientificName',names=statimal.index)
+# statfig.update_layout(paper_bgcolor='#000',font_color='#fff',margin={'r':0,'l':0,'t':0,'b':0})
 
 
 #Layout of the page
@@ -136,7 +136,7 @@ app.layout=dbc.Container([
     ]),
     dbc.Row([
         dbc.Col(dcc.Graph(id='swiss-animals',figure=fig),width={'size':7,'offset':0,'order':1}),
-        dbc.Col(dcc.Graph(id='animal-stats',figure=statfig),width={'size':5,'offset':0,'order':2})
+        dbc.Col(dcc.Graph(id='animal-stats',figure={}),width={'size':5,'offset':0,'order':2})
     ],no_gutters=False,justify='start'),
     dbc.Row([
 
