@@ -4,104 +4,18 @@ import dash_html_components as html
 from dash.dependencies import Output, Input
 import dash_bootstrap_components as dbc
 import pandas as pd
+from pandas._config import config
 import plotly.express as px
 import os.path
 import geopandas as gp
 import json
+import update_general_data as ugd
+
+#check data 
+ugd.checkSwiss()
+
 
 app = dash.Dash(__name__,external_stylesheets=[dbc.themes.CYBORG],meta_tags=[{'name':'viewport','content':'width=device-width, initial-scale=1.0'}])
-
-#figure construction
-
-canton_source ='https://raw.githubusercontent.com/dracoanguis/animal-dashbord/main/Data/Cantons-observation.geojson?token=ANUIZ2E3OVFR2HEPEXI6M5LA7XZJI'
-
-canton_path = os.path.join('Data','deprecated','Cantons-observation.geojson')
-
-with open(canton_path,'r') as cp:
-	cantons = json.load(cp)
-
-# canton=gp.read_file(canton_path)
-# canton.set_index('id')
-
-#fig = px.choropleth(data_frame=cantons,geojson=cantons.geometry,locations=cantons.index,color="NUMPOINTS",hover_name="name",hover_data=['NUMPOINTS'],fitbounds='locations',labels={'NUMPOINTS':'Obs'})
-#fig.update_layout(paper_bgcolor='#fff',font_color='#000',plot_bgcolor='#fff',modebar_bgcolor='#fff',margin={'r':0,'l':0,'t':0,'b':0},legend_bgcolor='rgba(0,0,0,0)')
-#fig.update_geos(visible=False)
-
-mapbox_acess_token = 'pk.eyJ1IjoiZ2FyZ2FuIiwiYSI6ImNrcmdicGV3NzBnNWozMXFuNzUwYXd3eXAifQ.sSL3-o-ywElRud8pRM4NKw'
-mapbox_style_url = 'mapbox://styles/gargan/ckrgedfau5bc417o52w9owh1g'
-
-
-# maplayers = [dict(
-#                 sourcetype='geojson',
-#                 source=cantons['features'][0],
-#                 type='fill',
-#                 color='#000',
-# 				opacity=1,
-# 				fill=dict(outlinecolor='#afafaf'),
-# 				below=""
-# 			)]
-
-# tracesChoro = [
-# 	dict(
-# 		name='cantons',
-# 		type='choroplethmapbox',
-# 		geojson=cantons,
-# 		featureidkey='properties.id',
-# 		locations=['ZU','BE','LU'],
-# 		z=[10,20,30],
-# 		showlegend=False,
-# 		hovertext='blop',
-		
-# 	)
-# ]
-
-MAP_COLOR_SCHEME = [[0,'#fff6c'],[0.125,'#f6e035'],[0.25,'#e79522'],[0.375,'#cb2f2b'],[0.5,'#910003'],[0.625,'#5e0000'],[0.75,'#340000'],[0.825,'#a74694']]
-
-datafig = [
-			# dict(
-            #     opacity=1,
-            #     fill='toself', #the filling of points
-            #     mode='marker', #mode of display
-			# 	# hoveron='fill', doesn't work for this type of map
-            #     type='scattermapbox', #what define the type of the map and it's properties (making the map print)
-            #     text='blip', #hovertext in order
-            #     hoverinfo='text', #where to get the hover
-            #     lat=[47,47,46], #lat for every point
-            #     lon=[8,9,9], #lon for every point
-            #     marker=dict(size=5,color='white',opacity=1, hoverinfo='text') #how the marker look
-            # ),
-            dict(
-                type='choroplethmapbox', # type of data
-                # trace=tracesChoro, doesn't work
-				geojson=cantons,
-				featureidkey='properties.id', # place where the id of a feature is fetched
-				locations=[cantons['features'][x]['properties']['id'] for x in range(26)],
-				z=[cantons['features'][x]['properties']['NUMPOINTS'] for x in range(26)],
-				showscale=False, #hide the atrocious colorbar legend
-				hovertext=[cantons['features'][x]['properties']['name'] for x in range(26)],
-				colorscale=MAP_COLOR_SCHEME # colorscale wich was determined on the other thing			
-            )
-]
-
-
-fig = dict(
-            data=datafig,
-            layout=dict(
-                        hovermode='closest',
-                        paper_bgcolor='#000',
-                        font_color='#fff',
-                        plot_bgcolor='#000',
-                        modebar_bgcolor='#000',
-                        margin={'r':0,'l':0,'t':0,'b':0},
-                        mapbox=dict(
-                                    layers=[],#maplayers,
-                                    accesstoken=mapbox_acess_token,
-                                    style=mapbox_style_url,
-                                    center=dict(lat=46.905,lon=8.258),
-                                    pitch=0,
-                                    zoom=6.3),
-                        autosize=True)
-            )
 
 
 #stats construction
@@ -126,9 +40,14 @@ fig = dict(
 # statfig = px.pie(data_frame=statimal,values='verbatimScientificName',names=statimal.index)
 # statfig.update_layout(paper_bgcolor='#000',font_color='#fff',margin={'r':0,'l':0,'t':0,'b':0})
 
-#Layout general variable
-
+#General variable
+CANTONS = ['AG','AI','AR','BE','BL','BS','FR','GE','GL','GR','JU','LU','NE','NW','OW','SG','SH','SO','SZ','TG','TI','UR','VD','VS','ZG','ZH']
 CARD_COLOR = '#353232'
+
+mapbox_acess_token = 'pk.eyJ1IjoiZ2FyZ2FuIiwiYSI6ImNrcmdicGV3NzBnNWozMXFuNzUwYXd3eXAifQ.sSL3-o-ywElRud8pRM4NKw'
+mapbox_style_url = 'mapbox://styles/gargan/ckrgedfau5bc417o52w9owh1g'
+
+MAP_COLOR_SCHEME = [[0,'#fff6c'],[0.125,'#f6e035'],[0.25,'#e79522'],[0.375,'#cb2f2b'],[0.5,'#910003'],[0.625,'#5e0000'],[0.75,'#340000'],[0.825,'#a74694']]
 
 
 #Layout of the page
@@ -163,9 +82,12 @@ app.layout=dbc.Container([
 						dbc.Card(
 							dcc.Graph(
 								id='swiss-map',
-								figure=fig,
+								figure={},
 								className='m-1',
-								style={'height':'50vh'}
+								style={'height':'50vh'},
+								config=dict(
+									doubleClick='reset'
+								)
 							),
 							color=CARD_COLOR,
 							className='m-1'
@@ -235,13 +157,15 @@ app.layout=dbc.Container([
 						dbc.Card(
 							[
 								dbc.CardHeader(
-									html.H6('Proportion of animals by species',className='text-white')
+									html.H6('Proportion of animals by species in Switzerland',
+										id='pie-title',
+										className='text-white')
 								),
 								dbc.CardBody(
 									dcc.Graph(
 										id='animal-proportion',
 										figure={},
-										className='m-1',
+										className='m-0',
 										style={'height':'21vh'}
 									)
 								)
@@ -290,22 +214,144 @@ app.layout=dbc.Container([
 #Callback: update
 #---------------------------------------------------------------------------------------
 
-# @app.callback(
-#     [
-# 		Input(component_id='population-slider',component_property='value')
-# 		Output(component_id='swiss-map',component_property='figure')
-# 	]
-# )
-# def update_graph():
+@app.callback(
+	Output('swiss-map','figure'),
+	Input(component_id='population-slider',component_property='value'),
+)
+def update_swiss_map(pop):
 
-#     file_path = os.path.join('Data','CantonCH.geojson')
+	sip = os.path.join('Data','swissInfo.csv')
+	smp = os.path.join('Data','CantonsCh.geojson')
 
-#     with open(file_path) as fp:
-#         cantons = json.load(fp)
+	with open(smp,'r') as fp:
+		cantons = json.load(fp)
 
-#     fig = px.choropleth(geojson=cantons,locations="id",featureidkey="properties.id")
+	infos = pd.read_csv(sip,)
+	infos.set_index('id',inplace=True)
 
-#     return fig
+	fig = dict(
+		data=
+			[
+			dict(
+				type='choroplethmapbox', # type of data
+				geojson=cantons,
+				featureidkey='properties.id', # place where the id of a feature is fetched
+				locations=[cantons['features'][x]['properties']['id'] for x in range(26)],
+				z=[(infos[('pop'+str(pop))]).loc[x] for x in ([cantons['features'][x]['properties']['id'] for x in range(26)])],
+				showscale=False, #hide the atrocious colorbar legend
+				hovertext=[cantons['features'][x]['properties']['name'] for x in range(26)],
+				colorscale=MAP_COLOR_SCHEME # colorscale wich was determined on the other thing	
+			)
+		],
+		layout=dict(
+			hovermode='closest',
+			paper_bgcolor='#000',
+			font_color='#fff',
+			plot_bgcolor='#000',
+			modebar_bgcolor='#000',
+			margin={'r':0,'l':0,'t':0,'b':0},
+			mapbox=dict(
+				layers=[],#maplayers,
+				accesstoken=mapbox_acess_token,
+				style=mapbox_style_url,
+				center=dict(lat=46.905,lon=8.258),
+				pitch=0,
+				zoom=6.3
+			),
+			autosize=True,
+			clickmode='event',
+			annotations=[
+				dict(
+					showarrow=False,
+					x=0.98,
+					y=0.10,
+					text='Reset',
+					captureevents=True,
+					bgcolor='#2d3c48',
+					font=dict(
+						color='white'
+					)
+				)
+			]
+		)
+	)
+
+	return fig
+
+@app.callback(
+	[
+		Output('animal-proportion','figure'),
+		Output('pie-title','children'),
+		Output('swiss-map','clickAnnotationData')
+	],
+	[
+		Input('swiss-map','clickData'),
+		Input('population-slider','value'),
+		Input('swiss-map','clickAnnotationData')
+	]
+)
+def update_animal_proportion(clicked,pop,clickanno):
+	print(clicked)
+	print(clickanno)
+
+	if clicked is None or clickanno is not None:
+		tocount = pd.DataFrame()
+		for ctid in CANTONS:
+			fp = os.path.join('Data','cantonInfo',(str(ctid)+'.csv'))
+			df = pd.read_csv(fp)
+			df = df[df['populationDensity']>=pop]
+			tocount = tocount.append(df,ignore_index=False)
+	
+		statimal = tocount['class'].value_counts()
+
+		fig = px.pie(
+			data_frame=statimal,
+			names=statimal.index,
+			values='class',
+		)
+
+		#To hide percentage
+		fig.update_traces(textposition='inside')
+		fig.update_layout(uniformtext_minsize=12, uniformtext_mode='hide')
+
+		fig.update_layout(
+			paper_bgcolor=CARD_COLOR,
+			font_color='#fff',
+			margin={'r':0,'l':0,'t':0,'b':0},
+			showlegend=False,
+		)
+
+		return fig, 'Proportion of animals by class in Switzerland', None
+
+	ctid = clicked['points'][0]['location']
+	ctname = clicked['points'][0]['hovertext']
+
+	fp = os.path.join('Data','cantonInfo',(str(ctid)+'.csv'))
+	df = pd.read_csv(fp)
+	df = df[df['populationDensity']>=pop]
+	
+	statimal = df['class'].value_counts()
+
+	fig = px.pie(
+		data_frame=statimal,
+		names=statimal.index,
+		values='class',
+	)
+
+	#To hide percentage
+	fig.update_traces(textposition='inside')
+	fig.update_layout(uniformtext_minsize=12, uniformtext_mode='hide')
+
+	fig.update_layout(
+		paper_bgcolor=CARD_COLOR,
+		font_color='#fff',
+		margin={'r':0,'l':0,'t':0,'b':0},
+		showlegend=False,
+	)
+
+	title = 'Proportion of animals by class in {}'.format(ctname)
+
+	return fig, title, None
 
 
 if __name__ == '__main__':
