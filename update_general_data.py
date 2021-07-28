@@ -5,7 +5,7 @@ Document to update the general informaion about switzerland in the switzerland.c
 import pandas as pd
 import os.path as op
 
-cantons = ['AG','AI','AR','BE','BL','BS','FR','GE','GL','GR','JU','LU','NE','NI','OW','SG','SH','SO','SZ','TG','TI','UR','VD','VS','ZG','ZU']
+cantons = ['AG','AI','AR','BE','BL','BS','FR','GE','GL','GR','JU','LU','NE','NW','OW','SG','SH','SO','SZ','TG','TI','UR','VD','VS','ZG','ZH']
 
 def checkSwiss():
     swisspath = op.join('Data','swissInfo.csv')
