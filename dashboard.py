@@ -237,7 +237,7 @@ app.layout=dbc.Container([
 def update_swiss_map(pop):
 
 	sip = os.path.join('Data','swissInfo.csv')
-	smp = os.path.join('Data','CantonsCh.geojson')
+	smp = os.path.join('Data','CantonsCH.geojson')
 
 	with open(smp,'r') as fp:
 		cantons = json.load(fp)
