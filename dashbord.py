@@ -15,31 +15,8 @@ import update_general_data as ugd
 #check data 
 ugd.checkSwiss()
 
-
+#app creation
 app = dash.Dash(__name__,external_stylesheets=[dbc.themes.CYBORG],meta_tags=[{'name':'viewport','content':'width=device-width, initial-scale=1.0'}])
-
-
-#stats construction
-# stat_path = os.path.join('Data','Sorted_Swiss.csv')
-
-# statimal = pd.read_csv(stat_path)
-
-# statimal = pd.DataFrame(statimal['verbatimScientificName'].value_counts())
-
-# reste = 0
-# dico = (statimal[10:]).to_dict()['verbatimScientificName']
-# for key in dico:
-#     reste+= int(dico[key])
-
-
-# statimal = statimal[:10].to_dict()
-
-# statimal['verbatimScientificName']['Other species']=reste
-
-# statimal = pd.DataFrame(statimal)
-
-# statfig = px.pie(data_frame=statimal,values='verbatimScientificName',names=statimal.index)
-# statfig.update_layout(paper_bgcolor='#000',font_color='#fff',margin={'r':0,'l':0,'t':0,'b':0})
 
 #General variable
 CANTONS = ['AG','AI','AR','BE','BL','BS','FR','GE','GL','GR','JU','LU','NE','NW','OW','SG','SH','SO','SZ','TG','TI','UR','VD','VS','ZG','ZH']
@@ -228,26 +205,6 @@ app.layout=dbc.Container([
 		)
     ],no_gutters=True,
 	),
-	# html.Div( #Hidden div for resets
-	# 	id='reset-div',
-	# 	hidden=True,
-	# 	children=[
-	# 		dcc.Dropdown(
-	# 			id='reset-map',
-	# 			options=[
-	# 				{'label':'nReset','value':True},
-	# 				{'label':'NnReset','value':False}
-	# 			]
-	# 		),
-	# 		dcc.Dropdown(
-	# 			id='reset-pie',
-	# 			options=[
-	# 				{'label':'nReset','value':True},
-	# 				{'label':'NnReset','value':False}
-	# 			]
-	# 		),
-	# 	]
-	# )
 ],fluid=True,className='mr-0 ml-0')
 
 #Callback: update
