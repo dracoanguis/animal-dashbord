@@ -586,4 +586,4 @@ def update_animal_number(clickedMap,clickedPie,pop,clickedAnno):
 	
 
 if __name__ == '__main__':
-    app.run_server(debug=True,port=8000)
+    app.run_server()
