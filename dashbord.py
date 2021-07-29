@@ -17,6 +17,8 @@ app = dash.Dash(__name__,external_stylesheets=[dbc.themes.CYBORG],meta_tags=[{'n
 
 app.title = 'Fluffboard'
 
+server=app.server
+
 #General variable
 CANTONS = ['AG','AI','AR','BE','BL','BS','FR','GE','GL','GR','JU','LU','NE','NW','OW','SG','SH','SO','SZ','TG','TI','UR','VD','VS','ZG','ZH']
 CARD_COLOR = '#353232'
