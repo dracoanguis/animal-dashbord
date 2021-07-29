@@ -97,10 +97,16 @@ app.layout=dbc.Container([
 					no_gutters=True,
 					justify='center'
 				),
-				dbc.Row( #Counts location
+				dbc.Row( #Timeline location
 					dbc.Col(
 						dbc.Card(
-							'blip blop blorp',
+							dcc.Graph(
+								id='time-bar',
+								figure={},
+								style={'height':'29vh'},
+								className='m-1'
+							),
+							color=CARD_COLOR,
 							className='m-1'
 						),
 						width={'size':11,'offset':0}
@@ -184,13 +190,16 @@ app.layout=dbc.Container([
 						dbc.Card(
 							[
 								dbc.CardHeader(
-									html.H6('Number of animals by species',className='text-white')
+									html.H6('Number of animals by species in Switzerland',
+									className='text-white',
+									id='bar-title'
+									)
 								),
 								dbc.CardBody(
 									dcc.Graph(
 										id='animal-number',
 										figure={},
-										className='m-1',
+										className='m-0',
 										style={'height':'21vh'}
 									)
 								)
@@ -209,6 +218,26 @@ app.layout=dbc.Container([
 		)
     ],no_gutters=True,
 	),
+	# html.Div( #Hidden div for resets
+	# 	id='reset-div',
+	# 	hidden=True,
+	# 	children=[
+	# 		dcc.Dropdown(
+	# 			id='reset-map',
+	# 			options=[
+	# 				{'label':'nReset','value':True},
+	# 				{'label':'NnReset','value':False}
+	# 			]
+	# 		),
+	# 		dcc.Dropdown(
+	# 			id='reset-pie',
+	# 			options=[
+	# 				{'label':'nReset','value':True},
+	# 				{'label':'NnReset','value':False}
+	# 			]
+	# 		),
+	# 	]
+	# )
 ],fluid=True,className='mr-0 ml-0')
 
 #Callback: update
@@ -279,10 +308,58 @@ def update_swiss_map(pop):
 	return fig
 
 @app.callback(
+	Output('time-bar','figure'),
+	Input('population-slider','value')	
+)
+def update_time_bar(pop):
+	layout=dict(
+		margin={'b': 0, 'l': 0, 'r': 0, 't': 0},
+		showlegend=False,
+		paper_bgcolor=CARD_COLOR,
+		font=dict(
+			color='#fff'
+		),
+		xaxis=dict(
+			title='Month',
+			visible=True,
+			showticklabels=False
+		),
+		yaxis=dict(
+			title='observations'
+		)
+	)
+
+	tocount = pd.DataFrame()
+	for ctid in CANTONS:
+		fp = os.path.join('Data','cantonInfo',(str(ctid)+'.csv'))
+		df = pd.read_csv(fp)
+		df = df[(df['populationDensity']>=pop)]
+		tocount = tocount.append(df,ignore_index=False)
+	
+	tocount['eventDate'] = pd.to_datetime(tocount['eventDate'])
+
+	tocount = tocount[tocount['eventDate']>=pd.to_datetime('2020-8-1')]
+	
+	tocount = tocount['eventDate']
+
+	statimal = tocount.groupby([tocount.dt.month]).agg({'count'})
+
+	months = ['August','September','October','November','December','January','Febuary','March','April','May','June','July']
+
+	fig = px.bar(
+		data_frame=statimal,
+		x=months,
+		y='count'
+	)
+
+	fig.update_layout(layout)
+
+	return fig
+
+@app.callback(
 	[
 		Output('animal-proportion','figure'),
 		Output('pie-title','children'),
-		Output('swiss-map','clickAnnotationData')
 	],
 	[
 		Input('swiss-map','clickData'),
@@ -291,8 +368,6 @@ def update_swiss_map(pop):
 	]
 )
 def update_animal_proportion(clicked,pop,clickanno):
-	print(clicked)
-	print(clickanno)
 
 	if clicked is None or clickanno is not None:
 		tocount = pd.DataFrame()
@@ -319,9 +394,22 @@ def update_animal_proportion(clicked,pop,clickanno):
 			font_color='#fff',
 			margin={'r':0,'l':0,'t':0,'b':0},
 			showlegend=False,
+			annotations=[
+				dict(
+					showarrow=False,
+					x=0.98,
+					y=0.10,
+					text='Reset',
+					captureevents=True,
+					bgcolor='#2d3c48',
+					font=dict(
+						color='white'
+					)
+				)
+			]
 		)
 
-		return fig, 'Proportion of animals by class in Switzerland', None
+		return fig, 'Proportion of animals by class in Switzerland'
 
 	ctid = clicked['points'][0]['location']
 	ctname = clicked['points'][0]['hovertext']
@@ -347,12 +435,156 @@ def update_animal_proportion(clicked,pop,clickanno):
 		font_color='#fff',
 		margin={'r':0,'l':0,'t':0,'b':0},
 		showlegend=False,
+		annotations=[
+			dict(
+				showarrow=False,
+				x=0.98,
+				y=0.10,
+				text='Reset',
+				captureevents=True,
+				bgcolor='#2d3c48',
+				font=dict(
+					color='white'
+				)
+			)
+		]
 	)
 
+	#pie title
 	title = 'Proportion of animals by class in {}'.format(ctname)
 
-	return fig, title, None
+	return fig, title
 
+@app.callback(
+	[
+		Output('animal-number','figure'),
+		Output('bar-title','children'),
+	],
+	[
+		Input('swiss-map','clickData'),
+		Input('animal-proportion','clickData'),
+		Input('population-slider','value'),
+		Input('swiss-map','clickAnnotationData'),
+		Input('animal-proportion','clickAnnotationData')
+	]
+)
+def update_animal_number(clickedMap,clickedPie,pop,clickedAnnoMap,clickedAnnoPie):
+
+	layout=dict(
+		margin={'b': 0, 'l': 0, 'r': 0, 't': 0},
+		showlegend=False,
+		paper_bgcolor=CARD_COLOR,
+		font=dict(
+			color='#fff'
+		),
+		xaxis=dict(
+			title='species',
+			visible=True,
+			showticklabels=False
+		),
+		yaxis=dict(
+			title='observations'
+		)
+	)
+
+	if (clickedMap is None or clickedAnnoMap is not None) and (clickedPie is None or clickedAnnoPie is not None):
+		tocount = pd.DataFrame()
+		for ctid in CANTONS:
+			fp = os.path.join('Data','cantonInfo',(str(ctid)+'.csv'))
+			df = pd.read_csv(fp)
+			df = df[df['populationDensity']>=pop]
+			tocount = tocount.append(df,ignore_index=False)
+		
+		statimal = tocount['species'].value_counts()
+
+		fig = px.bar(
+			data_frame=statimal,
+			x=statimal.index,
+			y='species',
+		)
+
+		fig.update_layout(layout)
+
+		return fig,'Number of animals by species in Switzerland'
+
+	if clickedMap is None or clickedAnnoMap is not None:
+		pieClass = clickedPie['points'][0]['label']
+		tocount = pd.DataFrame()
+		for ctid in CANTONS:
+			fp = os.path.join('Data','cantonInfo',(str(ctid)+'.csv'))
+			df = pd.read_csv(fp)
+			df = df[(df['populationDensity']>=pop)&(df['class']==pieClass)]
+			tocount = tocount.append(df,ignore_index=False)
+		
+		statimal = tocount['species'].value_counts()
+
+		fig = px.bar(
+			data_frame=statimal,
+			x=statimal.index,
+			y='species',
+		)
+
+		fig.update_layout(layout)
+
+		return fig,'Number of animals by species from {} class in Switzerland'.format(pieClass)
+
+	if clickedPie is None or clickedAnnoPie is not None:
+		ctid = clickedMap['points'][0]['location']
+		ctname = clickedMap['points'][0]['hovertext']
+
+		fp = os.path.join('Data','cantonInfo',(str(ctid)+'.csv'))
+		df = pd.read_csv(fp)
+		df = df[(df['populationDensity']>=pop)]
+
+		statimal = df['species'].value_counts()
+
+		fig = px.bar(
+			data_frame=statimal,
+			x=statimal.index,
+			y='species',
+		)
+
+		fig.update_layout(layout)
+
+		return fig,'Number of animals by species in {}'.format(ctname)
+	
+	ctid = clickedMap['points'][0]['location']
+	ctname = clickedMap['points'][0]['hovertext']
+	pieClass = clickedPie['points'][0]['label']
+
+	fp = os.path.join('Data','cantonInfo',(str(ctid)+'.csv'))
+	df = pd.read_csv(fp)
+	df = df[(df['populationDensity']>=pop)&(df['class']==pieClass)]
+
+	statimal = df['species'].value_counts()
+
+	fig = px.bar(
+		data_frame=statimal,
+		x=statimal.index,
+		y='species',
+	)
+
+	fig.update_layout(layout)
+
+	return fig,'Number of animals by species from {} class in {}'.format(pieClass,ctname)
+
+#Reset callback (shity things)
+# @app.callback(
+# 	Output('swiss-map','clickData'),
+# 	Input('swiss-map','clickAnnotationData')
+# )
+# def update_reset_map(clickedAnno):
+# 	if clickedAnno is not None:
+# 		return None
+
+# @app.callback(
+# 	Output('swiss-map','clickAnnotationData'),
+# 	Input('swiss-map','clickData')
+# )
+# def update_reset_map_t(clickedMap):
+# 	if clickedMap is not None:
+# 		return None
+	
 
 if __name__ == '__main__':
     app.run_server(debug=True,port=8000)
