@@ -349,11 +349,8 @@ def update_time_bar(pop):
 		tocount = tocount.append(df,ignore_index=False)
 	
 	tocount['eventDate'] = pd.to_datetime(tocount['eventDate'])
-
 	tocount = tocount[tocount['eventDate']>=pd.to_datetime('2020-8-1')]
-	
 	tocount = tocount['eventDate']
-
 	statimal = tocount.groupby([tocount.dt.month]).agg({'count'})
 
 	months = ['August','September','October','November','December','January','Febuary','March','April','May','June','July']
@@ -361,10 +358,13 @@ def update_time_bar(pop):
 	fig = px.bar(
 		data_frame=statimal,
 		x=months,
-		y='count'
+		y='count',
 	)
 
 	fig.update_layout(layout)
+
+	#bad way!!!
+	fig['data'][0]['hovertemplate'] = '<b>%{x}</b><br>Observation:%{y}<extra></extra>'
 
 	return fig
 
@@ -428,6 +428,9 @@ def update_animal_proportion(clicked,pop,clickanno):
 
 		fig.update_layout(layout)
 
+		#bad way!!
+		fig['data'][0]['hovertemplate'] = '<b>%{label}</b><br>observation:%{value}<extra></extra>'
+
 		return fig, 'Proportion of animals by class in Switzerland',None,None
 
 	ctid = clicked['points'][0]['location']
@@ -453,6 +456,9 @@ def update_animal_proportion(clicked,pop,clickanno):
 
 	#pie title
 	title = 'Proportion of animals by class in {}'.format(ctname)
+
+	#bad way!!
+	fig['data'][0]['hovertemplate'] = '<b>%{label}</b><br>observation:%{value}<extra></extra>'
 
 	return fig, title, None, clicked
 
@@ -526,6 +532,9 @@ def update_animal_number(clickedMap,clickedPie,pop,clickedAnno):
 
 		fig.update_layout(layout)
 
+		#bad way
+		fig['data'][0]['hovertemplate'] = '<b>%{x}</b><br>observations:%{y}<extra></extra>'
+
 		return fig,'Number of animals by species in Switzerland',None,None
 
 	if clickedMap is None:
@@ -547,6 +556,9 @@ def update_animal_number(clickedMap,clickedPie,pop,clickedAnno):
 
 		fig.update_layout(layout)
 
+		#bad way
+		fig['data'][0]['hovertemplate'] = '<b>%{x}</b><br>observations:%{y}<extra></extra>'
+
 		return fig,'Number of animals by species from {} class in Switzerland'.format(pieClass),None,None
 
 	if clickedPie is None:
@@ -567,6 +579,9 @@ def update_animal_number(clickedMap,clickedPie,pop,clickedAnno):
 
 		fig.update_layout(layout)
 
+		#bad way
+		fig['data'][0]['hovertemplate'] = '<b>%{x}</b><br>observation:%{y}<extra></extra>'
+
 		return fig,'Number of animals by species in {}'.format(ctname),None,None
 	
 	ctid = clickedMap['points'][0]['location']
@@ -586,6 +601,9 @@ def update_animal_number(clickedMap,clickedPie,pop,clickedAnno):
 	)
 
 	fig.update_layout(layout)
+
+	#bad way
+	fig['data'][0]['hovertemplate'] = '<b>%{x}</b><br>observations:%{y}<extra></extra>'
 
 	return fig,'Number of animals by species from {} class in {}'.format(pieClass,ctname),None,None
 	
