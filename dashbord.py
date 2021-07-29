@@ -13,7 +13,7 @@ import update_general_data as ugd
 ugd.checkSwiss()
 
 #app creation
-app = dash.Dash(__name__,external_stylesheets=[dbc.themes.CYBORG],meta_tags=[{'name':'viewport','content':'width=device-width, initial-scale=1.0'}])
+app = dash.Dash(__name__,external_stylesheets=[dbc.themes.CYBORG])
 
 app.title = 'Fluffboard'
 
@@ -586,4 +586,4 @@ def update_animal_number(clickedMap,clickedPie,pop,clickedAnno):
 	
 
 if __name__ == '__main__':
-    app.run_server()
+    app.run_server(debug=True)
