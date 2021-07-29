@@ -1,4 +1,5 @@
 import dash
+from dash_bootstrap_components._components.CardHeader import CardHeader
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Output, Input
@@ -100,12 +101,21 @@ app.layout=dbc.Container([
 				dbc.Row( #Timeline location
 					dbc.Col(
 						dbc.Card(
-							dcc.Graph(
-								id='time-bar',
-								figure={},
-								style={'height':'29vh'},
-								className='m-1'
-							),
+							[
+								dbc.CardHeader(
+									html.H6('Number of observation in the past year',
+										className='text-white'
+									)
+								),
+								dbc.CardBody(
+									dcc.Graph(
+									id='time-bar',
+									figure={},
+									style={'height':'20vh'},
+									className='m-0'
+									)
+								)
+							],
 							color=CARD_COLOR,
 							className='m-1'
 						),
@@ -200,12 +210,12 @@ app.layout=dbc.Container([
 										id='animal-number',
 										figure={},
 										className='m-0',
-										style={'height':'21vh'}
+										style={'height':'22vh'}
 									)
 								)
 							],
 							className='m-1',
-							style={'height':'32vh'},
+							# style={'height':'32vh'},
 							color=CARD_COLOR
 						),
 						width={'size':11,'offset':0}
@@ -289,19 +299,19 @@ def update_swiss_map(pop):
 			),
 			autosize=True,
 			clickmode='event',
-			annotations=[
-				dict(
-					showarrow=False,
-					x=0.98,
-					y=0.10,
-					text='Reset',
-					captureevents=True,
-					bgcolor='#2d3c48',
-					font=dict(
-						color='white'
-					)
-				)
-			]
+			# annotations=[
+			# 	dict(
+			# 		showarrow=False,
+			# 		x=0.98,
+			# 		y=0.10,
+			# 		text='Reset',
+			# 		captureevents=True,
+			# 		bgcolor='#2d3c48',
+			# 		font=dict(
+			# 			color='white'
+			# 		)
+			# 	)
+			# ]
 		)
 	)
 
@@ -316,13 +326,15 @@ def update_time_bar(pop):
 		margin={'b': 0, 'l': 0, 'r': 0, 't': 0},
 		showlegend=False,
 		paper_bgcolor=CARD_COLOR,
+		plot_bgcolor=CARD_COLOR,
 		font=dict(
 			color='#fff'
 		),
 		xaxis=dict(
 			title='Month',
 			visible=True,
-			showticklabels=False
+			showticklabels=True,
+
 		),
 		yaxis=dict(
 			title='observations'
@@ -360,14 +372,39 @@ def update_time_bar(pop):
 	[
 		Output('animal-proportion','figure'),
 		Output('pie-title','children'),
+		Output('animal-proportion','clickAnnotationData'),
+		Output('swiss-map','clickData')
 	],
 	[
 		Input('swiss-map','clickData'),
 		Input('population-slider','value'),
-		Input('swiss-map','clickAnnotationData')
+		Input('animal-proportion','clickAnnotationData')
 	]
 )
 def update_animal_proportion(clicked,pop,clickanno):
+
+	layout=dict(
+		paper_bgcolor=CARD_COLOR,
+		font_color='#fff',
+		margin={'r':0,'l':0,'t':0,'b':0},
+		showlegend=False,
+		annotations=[
+			dict(
+				showarrow=False,
+				x=0.98,
+				y=0.10,
+				text='Reset',
+				captureevents=True,
+				bgcolor='white',
+				opacity=0.8,
+				borderwidth=2,
+				bordercolor='grey',
+				font=dict(
+					color=CARD_COLOR
+				)
+			)
+		]
+	)
 
 	if clicked is None or clickanno is not None:
 		tocount = pd.DataFrame()
@@ -389,27 +426,9 @@ def update_animal_proportion(clicked,pop,clickanno):
 		fig.update_traces(textposition='inside')
 		fig.update_layout(uniformtext_minsize=12, uniformtext_mode='hide')
 
-		fig.update_layout(
-			paper_bgcolor=CARD_COLOR,
-			font_color='#fff',
-			margin={'r':0,'l':0,'t':0,'b':0},
-			showlegend=False,
-			annotations=[
-				dict(
-					showarrow=False,
-					x=0.98,
-					y=0.10,
-					text='Reset',
-					captureevents=True,
-					bgcolor='#2d3c48',
-					font=dict(
-						color='white'
-					)
-				)
-			]
-		)
+		fig.update_layout(layout)
 
-		return fig, 'Proportion of animals by class in Switzerland'
+		return fig, 'Proportion of animals by class in Switzerland',None,None
 
 	ctid = clicked['points'][0]['location']
 	ctname = clicked['points'][0]['hovertext']
@@ -430,50 +449,34 @@ def update_animal_proportion(clicked,pop,clickanno):
 	fig.update_traces(textposition='inside')
 	fig.update_layout(uniformtext_minsize=12, uniformtext_mode='hide')
 
-	fig.update_layout(
-		paper_bgcolor=CARD_COLOR,
-		font_color='#fff',
-		margin={'r':0,'l':0,'t':0,'b':0},
-		showlegend=False,
-		annotations=[
-			dict(
-				showarrow=False,
-				x=0.98,
-				y=0.10,
-				text='Reset',
-				captureevents=True,
-				bgcolor='#2d3c48',
-				font=dict(
-					color='white'
-				)
-			)
-		]
-	)
+	fig.update_layout(layout)
 
 	#pie title
 	title = 'Proportion of animals by class in {}'.format(ctname)
 
-	return fig, title
+	return fig, title, None, clicked
 
 @app.callback(
 	[
 		Output('animal-number','figure'),
 		Output('bar-title','children'),
+		Output('animal-number','clickAnnotationData'),
+		Output('animal-proportion','clickData')
 	],
 	[
 		Input('swiss-map','clickData'),
 		Input('animal-proportion','clickData'),
 		Input('population-slider','value'),
-		Input('swiss-map','clickAnnotationData'),
-		Input('animal-proportion','clickAnnotationData')
+		Input('animal-number','clickAnnotationData')
 	]
 )
-def update_animal_number(clickedMap,clickedPie,pop,clickedAnnoMap,clickedAnnoPie):
+def update_animal_number(clickedMap,clickedPie,pop,clickedAnno):
 
 	layout=dict(
 		margin={'b': 0, 'l': 0, 'r': 0, 't': 0},
 		showlegend=False,
 		paper_bgcolor=CARD_COLOR,
+		plot_bgcolor=CARD_COLOR,
 		font=dict(
 			color='#fff'
 		),
@@ -484,10 +487,28 @@ def update_animal_number(clickedMap,clickedPie,pop,clickedAnnoMap,clickedAnnoPie
 		),
 		yaxis=dict(
 			title='observations'
-		)
+		),
+		annotations=[
+				dict(
+					showarrow=False,
+					text='Reset',
+					xref='paper',
+					yref='paper',
+					x=0.98,
+					y=0.8,
+					captureevents=True,
+					bgcolor='white',
+					opacity=0.8,
+					borderwidth=2,
+					bordercolor='grey',
+					font=dict(
+						color=CARD_COLOR
+					)
+				)
+			]
 	)
 
-	if (clickedMap is None or clickedAnnoMap is not None) and (clickedPie is None or clickedAnnoPie is not None):
+	if (clickedMap is None  and clickedPie is None) or (clickedAnno is not None):
 		tocount = pd.DataFrame()
 		for ctid in CANTONS:
 			fp = os.path.join('Data','cantonInfo',(str(ctid)+'.csv'))
@@ -505,9 +526,9 @@ def update_animal_number(clickedMap,clickedPie,pop,clickedAnnoMap,clickedAnnoPie
 
 		fig.update_layout(layout)
 
-		return fig,'Number of animals by species in Switzerland'
+		return fig,'Number of animals by species in Switzerland',None,None
 
-	if clickedMap is None or clickedAnnoMap is not None:
+	if clickedMap is None:
 		pieClass = clickedPie['points'][0]['label']
 		tocount = pd.DataFrame()
 		for ctid in CANTONS:
@@ -526,9 +547,9 @@ def update_animal_number(clickedMap,clickedPie,pop,clickedAnnoMap,clickedAnnoPie
 
 		fig.update_layout(layout)
 
-		return fig,'Number of animals by species from {} class in Switzerland'.format(pieClass)
+		return fig,'Number of animals by species from {} class in Switzerland'.format(pieClass),None,None
 
-	if clickedPie is None or clickedAnnoPie is not None:
+	if clickedPie is None:
 		ctid = clickedMap['points'][0]['location']
 		ctname = clickedMap['points'][0]['hovertext']
 
@@ -546,7 +567,7 @@ def update_animal_number(clickedMap,clickedPie,pop,clickedAnnoMap,clickedAnnoPie
 
 		fig.update_layout(layout)
 
-		return fig,'Number of animals by species in {}'.format(ctname)
+		return fig,'Number of animals by species in {}'.format(ctname),None,None
 	
 	ctid = clickedMap['points'][0]['location']
 	ctname = clickedMap['points'][0]['hovertext']
@@ -566,24 +587,7 @@ def update_animal_number(clickedMap,clickedPie,pop,clickedAnnoMap,clickedAnnoPie
 
 	fig.update_layout(layout)
 
-	return fig,'Number of animals by species from {} class in {}'.format(pieClass,ctname)
-
-#Reset callback (shity things)
-# @app.callback(
-# 	Output('swiss-map','clickData'),
-# 	Input('swiss-map','clickAnnotationData')
-# )
-# def update_reset_map(clickedAnno):
-# 	if clickedAnno is not None:
-# 		return None
-
-# @app.callback(
-# 	Output('swiss-map','clickAnnotationData'),
-# 	Input('swiss-map','clickData')
-# )
-# def update_reset_map_t(clickedMap):
-# 	if clickedMap is not None:
-# 		return None
+	return fig,'Number of animals by species from {} class in {}'.format(pieClass,ctname),None,None
 	
 
 if __name__ == '__main__':
