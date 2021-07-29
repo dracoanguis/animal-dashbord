@@ -1,14 +1,11 @@
 import dash
-from dash_bootstrap_components._components.CardHeader import CardHeader
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Output, Input
 import dash_bootstrap_components as dbc
 import pandas as pd
-from pandas._config import config
 import plotly.express as px
 import os.path
-import geopandas as gp
 import json
 import update_general_data as ugd
 
@@ -17,6 +14,8 @@ ugd.checkSwiss()
 
 #app creation
 app = dash.Dash(__name__,external_stylesheets=[dbc.themes.CYBORG],meta_tags=[{'name':'viewport','content':'width=device-width, initial-scale=1.0'}])
+
+app.title = 'Fluffboard'
 
 #General variable
 CANTONS = ['AG','AI','AR','BE','BL','BS','FR','GE','GL','GR','JU','LU','NE','NW','OW','SG','SH','SO','SZ','TG','TI','UR','VD','VS','ZG','ZH']
@@ -64,7 +63,12 @@ app.layout=dbc.Container([
 								className='m-1',
 								style={'height':'50vh'},
 								config=dict(
-									doubleClick='reset'
+									modeBarButtonsToRemove=[
+										'toImage',
+										'select2d',
+										'lasso2d'
+									],
+									displaylogo=False
 								)
 							),
 							color=CARD_COLOR,
@@ -89,7 +93,10 @@ app.layout=dbc.Container([
 									id='time-bar',
 									figure={},
 									style={'height':'20vh'},
-									className='m-0'
+									className='m-0',
+									config=dict(
+										displayModeBar=False
+									)
 									)
 								)
 							],
@@ -159,7 +166,10 @@ app.layout=dbc.Container([
 										id='animal-proportion',
 										figure={},
 										className='m-0',
-										style={'height':'21vh'}
+										style={'height':'21vh'},
+										config=dict(
+											displayModeBar=False
+										)
 									)
 								)
 							],
@@ -187,7 +197,15 @@ app.layout=dbc.Container([
 										id='animal-number',
 										figure={},
 										className='m-0',
-										style={'height':'22vh'}
+										style={'height':'22vh'},
+										config=dict(
+											modeBarButtonsToRemove=[
+												'toImage',
+												'select2d',
+												'lasso2d'
+											],
+											displaylogo=False
+										)
 									)
 								)
 							],
@@ -250,9 +268,9 @@ def update_swiss_map(pop):
 				layers=[],#maplayers,
 				accesstoken=mapbox_acess_token,
 				style=mapbox_style_url,
-				center=dict(lat=46.905,lon=8.258),
+				center=dict(lat=46.850,lon=8.258),
 				pitch=0,
-				zoom=6.3
+				zoom=6.5
 			),
 			autosize=True,
 			clickmode='event',
